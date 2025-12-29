@@ -7,3 +7,5 @@ db.sqlite3
 .DS_Store
 .vscode/
 .venv_*/
+jenkinsfile
+DockerFile
