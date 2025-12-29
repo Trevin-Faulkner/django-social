@@ -46,12 +46,21 @@ pipeline {
 
         stage('Deploy to Kubernetes') {
             steps {
+                // withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
+                //     sh '''
+                //       sed -i "s|:latest|:$TAG|g" k8s/deployment.yaml
+                //       kubectl apply -f k8s/
+                //     '''
+                // }
                 withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
                     sh '''
-                      sed -i "s|:latest|:$TAG|g" k8s/deployment.yaml
-                      kubectl apply -f k8s/
+                    export KUBECONFIG=$KUBECONFIG
+                    kubectl version --client
+                    kubectl get nodes
+                    kubectl apply -f k8s/
                     '''
                 }
+
             }
         }
     }
