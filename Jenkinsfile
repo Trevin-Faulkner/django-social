@@ -17,7 +17,7 @@ pipeline {
 
         stage('Run Tests') {
             steps {
-                sh 'python -m venv venv'
+                sh 'python3 -m venv venv'
                 sh '. venv/bin/activate && pip install -r requirements.txt'
                 sh '. venv/bin/activate && python manage.py test'
             }
