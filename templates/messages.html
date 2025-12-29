@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-6xl mx-auto px-6 py-6 bg-white rounded-3xl shadow-card">
+  <div class="flex items-center justify-between pb-4 border-b border-slate-200">
+    <div class="flex space-x-6 text-sm font-semibold text-slate-700">
+      <a href="{% url 'discover' %}" class="hover:text-teal-500">Discover</a>
+      <a href="{% url 'messages' %}" class="text-teal-500">Messages</a>
+      <a href="{% url 'profile' %}" class="hover:text-teal-500">Profile</a>
+    </div>
+    <div class="flex items-center space-x-3 text-slate-500">
+      <button class="hover:text-teal-500">📞</button>
+      <button class="hover:text-teal-500">💬</button>
+      <button class="hover:text-teal-500">⋮</button>
+    </div>
+  </div>
+  <div class="grid md:grid-cols-3 gap-4 pt-4">
+    <div class="col-span-1 border-r border-slate-200 pr-3">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-lg font-semibold text-slate-900">Messages</h3>
+        <span class="text-xs text-slate-500">Active</span>
+      </div>
+      <div class="space-y-2 max-h-[640px] overflow-y-auto">
+        {% for item in convos_with_partner %}
+          {% with convo=item.conversation partner=item.partner %}
+          <a href="{% url 'messages' convo.id %}" class="flex items-center space-x-3 px-3 py-2 rounded-xl {% if active_conversation and convo.id == active_conversation.id %}bg-teal-50 border border-teal-100{% else %}hover:bg-slate-50{% endif %}">
+            <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">{{ partner.first_name|first|upper }}{{ partner.last_name|first|upper }}</div>
+            <div class="flex-1">
+              <p class="text-sm font-semibold text-slate-900">{{ partner.get_full_name|default:partner.username }}</p>
+              <p class="text-xs text-slate-500 truncate">{{ partner.headline|default:"Active now" }}</p>
+            </div>
+            <span class="w-2 h-2 rounded-full bg-green-500 hidden" data-user-dot data-user-id="{{ partner.id }}"></span>
+          </a>
+          {% endwith %}
+        {% empty %}
+          <p class="text-slate-600 text-sm">No conversations yet.</p>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="col-span-2 flex flex-col">
+      {% if active_conversation %}
+      <div class="flex items-center space-x-3 border-b border-slate-200 pb-3 mb-3">
+        <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">{{ partner.first_name|first|upper }}{{ partner.last_name|first|upper }}</div>
+        <div>
+          <p class="text-sm font-semibold text-slate-900">{{ partner.get_full_name|default:partner.username }}</p>
+          <p class="text-xs text-slate-500">Active now</p>
+        </div>
+        <span id="partner-status-dot" class="w-2 h-2 rounded-full bg-green-500 hidden"></span>
+      </div>
+      <div id="chat-feed" data-conversation-id="{{ active_conversation.id }}" data-partner-id="{{ partner.id }}" class="flex-1 overflow-y-auto space-y-3 pb-4 max-h-[520px]">
+        {% for message in active_conversation.messages.all %}
+          <div class="flex {% if message.sender == user %}justify-end{% endif %}">
+            <div class="rounded-2xl px-4 py-2 max-w-xl {% if message.sender == user %}bg-teal-500 text-white{% else %}bg-slate-100 text-slate-800{% endif %}">
+              <p class="text-sm">{{ message.body }}</p>
+              <p class="text-[10px] opacity-70 mt-1">{{ message.created_at|date:"g:i A" }}</p>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+      <form id="chat-form" method="post" action="{% url 'send_message_api' active_conversation.id %}" class="pt-3 mt-auto">
+        {% csrf_token %}
+        <div class="flex items-center space-x-2">
+          <input type="text" name="body" placeholder="Type a message..." class="flex-1 rounded-full border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500">
+          <button class="w-12 h-12 rounded-full bg-teal-500 text-white font-semibold hover:bg-teal-600">➤</button>
+        </div>
+      </form>
+      {% else %}
+        <div class="flex-1 flex items-center justify-center text-slate-600">Start a conversation from Discover.</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

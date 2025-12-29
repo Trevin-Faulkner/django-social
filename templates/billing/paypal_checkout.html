@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 py-12">
+  <div class="bg-white rounded-3xl shadow-card p-8 space-y-4">
+    <h1 class="text-2xl font-bold text-slate-900">Upgrade to {{ plan|title }}</h1>
+    <p class="text-slate-600">One-time charge: ${{ amount }}</p>
+    <div id="paypal-button-container" class="mt-6 w-full"></div>
+    <p class="text-sm text-slate-500">You will be redirected after PayPal approval.</p>
+  </div>
+</div>
+<script src="https://www.paypal.com/sdk/js?client-id={{ paypal_client_id }}&currency=USD"></script>
+<script>
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+  paypal.Buttons({
+    createOrder: function(data, actions) {
+      return fetch("{% url 'create_paypal_order' %}", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCookie('csrftoken')
+        },
+        body: JSON.stringify({ plan: "{{ plan }}", amount: "{{ amount }}" })
+      })
+      .then(res => res.json())
+      .then(data => data.orderID);
+    },
+    onApprove: function(data, actions) {
+      return fetch("{% url 'capture_paypal_order' %}", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCookie('csrftoken')
+        },
+        body: JSON.stringify({ orderID: data.orderID, plan: "{{ plan }}" })
+      })
+      .then(res => res.json())
+      .then(result => {
+        if (result.status === "COMPLETED") {
+          window.location.href = "{% url 'profile' %}";
+        } else {
+          alert("Payment error.");
+        }
+      });
+    },
+    onError: function(err) {
+      console.error(err);
+      alert("PayPal error: check console.");
+    }
+  }).render("#paypal-button-container");
+</script>
+{% endblock %}

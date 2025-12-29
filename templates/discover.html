@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% load social_extras %}
+{% block content %}
+<div class="max-w-6xl mx-auto px-6 py-8 space-y-6">
+  <div class="bg-white rounded-2xl shadow-card p-5 flex items-center justify-between border border-slate-100">
+    <div>
+      <p class="text-sm text-slate-600">Daily Connection Limit</p>
+      <p class="text-lg font-semibold text-slate-900">You have {% if remaining is None %}unlimited{% else %}{{ remaining }} out of {{ limit }}{% endif %} connections remaining today</p>
+    </div>
+    <a href="{% url 'upgrade_plan' 'plus' %}" class="px-4 py-2 rounded-xl bg-teal-500 text-white font-semibold shadow-card hover:bg-teal-600">Upgrade Plan</a>
+  </div>
+
+  <div class="grid md:grid-cols-3 gap-6">
+    <div class="md:col-span-2 space-y-4">
+      <form method="get" class="bg-white rounded-2xl shadow-card p-4 border border-slate-100">
+        <div class="flex items-center space-x-3">
+          <input type="text" name="q" value="{{ q }}" placeholder="Search by name, skills, or location..." class="flex-1 rounded-xl border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500">
+          <button class="px-4 py-3 rounded-xl bg-slate-900 text-white font-semibold">Search</button>
+        </div>
+      </form>
+
+      <h2 class="text-lg font-semibold text-slate-900">Discover {{ target_label }}</h2>
+      <div class="space-y-4">
+        {% for person in users %}
+        <div class="bg-white rounded-2xl shadow-card p-5 flex flex-col md:flex-row md:items-center md:justify-between border border-slate-100">
+          <div class="flex items-center space-x-4">
+            <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
+              {{ person.first_name|first|upper }}{{ person.last_name|first|upper }}
+            </div>
+            <div>
+              <p class="text-lg font-semibold text-slate-900">{{ person.get_full_name|default:person.username }}</p>
+              <p class="text-slate-600">{{ person.headline|default:"Looking for talented partners" }}</p>
+              <div class="flex flex-wrap items-center gap-2 text-sm text-slate-500 mt-1">
+                {% if person.location %}<span>📍 {{ person.location }}</span>{% endif %}
+                <span class="px-3 py-1 rounded-full border border-slate-200 text-xs font-semibold">{{ person.role|title }}</span>
+              </div>
+              <div class="flex flex-wrap gap-2 mt-2">
+                {% for skill in person.skills_list|slice:":5" %}
+                  <span class="px-3 py-1 rounded-full bg-coral/10 text-coral text-xs font-semibold">{{ skill }}</span>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center space-x-3 mt-3 md:mt-0">
+            {% with status=status_map|get_item:person.id %}
+              {% if status %}
+                {% if status.status == 'accepted' %}
+                  <button class="px-4 py-2 rounded-xl bg-slate-100 text-slate-500 font-semibold cursor-not-allowed">Connected</button>
+                {% elif status.status == 'pending' and status.is_requester %}
+                  <button class="px-4 py-2 rounded-xl bg-slate-100 text-slate-500 font-semibold cursor-not-allowed">Pending</button>
+                {% elif status.status == 'pending' and not status.is_requester %}
+                  <form method="post" action="{% url 'accept_connection' status.connection_id %}">
+                    {% csrf_token %}
+                    <button class="px-4 py-2 rounded-xl bg-teal-500 text-white font-semibold hover:bg-teal-600">Accept</button>
+                  </form>
+                {% endif %}
+              {% else %}
+                <form method="post" action="{% url 'connect_user' person.id %}">
+                  {% csrf_token %}
+                  <button class="px-4 py-2 rounded-xl bg-teal-500 text-white font-semibold hover:bg-teal-600">Connect</button>
+                </form>
+              {% endif %}
+            {% endwith %}
+            <a href="{% url 'start_chat' person.id %}" class="px-4 py-2 rounded-xl border border-slate-200 font-semibold text-slate-700 hover:border-slate-300">View Profile</a>
+          </div>
+        </div>
+        {% empty %}
+          <div class="bg-white rounded-2xl shadow-card p-6 text-center text-slate-600">No matches found yet.</div>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="space-y-4">
+      <div class="bg-white rounded-2xl shadow-card p-5 border border-slate-100">
+        <div class="flex items-center justify-between mb-3">
+          <p class="font-semibold text-slate-900">My Connections ({{ my_connections|length }})</p>
+          <a href="{% url 'messages' %}" class="text-sm text-teal-500 font-semibold">Messages</a>
+        </div>
+        <div class="space-y-3">
+          {% for connection in my_connections %}
+            {% if connection.requester == user %}
+              {% with partner=connection.receiver %}
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm font-semibold text-slate-900">{{ partner.get_full_name|default:partner.username }}</p>
+                  <p class="text-xs text-slate-500">{{ partner.headline|default:"Active now" }}</p>
+                </div>
+                <a href="{% url 'start_chat' partner.id %}" class="text-slate-400 hover:text-teal-500">💬</a>
+              </div>
+              {% endwith %}
+            {% else %}
+              {% with partner=connection.requester %}
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm font-semibold text-slate-900">{{ partner.get_full_name|default:partner.username }}</p>
+                  <p class="text-xs text-slate-500">{{ partner.headline|default:"Active now" }}</p>
+                </div>
+                <a href="{% url 'start_chat' partner.id %}" class="text-slate-400 hover:text-teal-500">💬</a>
+              </div>
+              {% endwith %}
+            {% endif %}
+          {% empty %}
+            <p class="text-slate-600 text-sm">You don't have any connections yet.</p>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl shadow-card p-5 border border-slate-100">
+        <p class="font-semibold text-slate-900 mb-3">Popular Skills</p>
+        <div class="flex flex-wrap gap-2">
+          {% for skill in popular_skills %}
+            <span class="px-3 py-1 rounded-full bg-coral/10 text-coral text-xs font-semibold">{{ skill }}</span>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

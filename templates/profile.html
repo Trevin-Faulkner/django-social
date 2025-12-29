@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-6xl mx-auto px-6 py-10 space-y-6">
+  <div class="bg-white rounded-3xl shadow-card p-6 flex flex-col md:flex-row md:items-center md:justify-between">
+    <div class="flex items-center space-x-4">
+      <div class="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center text-2xl text-slate-400 overflow-hidden">
+        {% if profile_user.profile_image %}
+          <img src="{{ profile_user.profile_image.url }}" alt="{{ profile_user.get_full_name }}" class="w-20 h-20 rounded-full object-cover">
+        {% else %}
+          <span>{{ profile_user.first_name|first|upper }}{{ profile_user.last_name|first|upper }}</span>
+        {% endif %}
+      </div>
+      <div>
+        <h1 class="text-2xl font-bold text-slate-900">{{ profile_user.get_full_name|default:profile_user.username }}</h1>
+        <p class="text-slate-600">{{ profile_user.headline|default:"Full Stack Developer | React & Node.js Expert" }}</p>
+        <div class="flex flex-wrap items-center gap-3 text-sm text-slate-500 mt-2">
+          {% if profile_user.location %}<span>📍 {{ profile_user.location }}</span>{% endif %}
+          {% if profile_user.email %}<span>✉️ {{ profile_user.email }}</span>{% endif %}
+          <span>Member since {{ profile_user.date_joined|date:"F Y" }}</span>
+        </div>
+      </div>
+    </div>
+    <div class="flex items-center gap-3 mt-4 md:mt-0">
+      {% if profile_user.membership_plan != 'free' %}
+        <span class="px-3 py-1 rounded-full bg-coral/10 text-coral font-semibold text-sm">{{ profile_user.membership_plan|title }}</span>
+      {% endif %}
+      {% if profile_user == user %}
+      <a href="#edit-profile" class="px-4 py-2 rounded-xl bg-teal-500 text-white font-semibold hover:bg-teal-600">Edit Profile</a>
+      {% endif %}
+      <button class="px-4 py-2 rounded-xl border border-slate-200 font-semibold text-slate-700 hover:border-slate-300">Share Profile</button>
+    </div>
+  </div>
+
+  <div class="grid md:grid-cols-3 gap-4">
+    <div class="bg-white rounded-2xl shadow-card p-5 flex items-center justify-between border border-slate-100">
+      <div>
+        <p class="text-sm text-slate-500">Active Connections</p>
+        <p class="text-3xl font-bold text-slate-900">{{ active_connections }}</p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-teal-500/10 text-teal-500 flex items-center justify-center">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="1.5" d="M12 12.75c2.9 0 5.25-2.35 5.25-5.25S14.9 2.25 12 2.25 6.75 4.6 6.75 7.5 9.1 12.75 12 12.75Zm0 0c-3.728 0-6.75 2.492-6.75 5.563C5.25 21.308 7.536 22.5 12 22.5s6.75-1.192 6.75-4.187c0-3.07-3.022-5.563-6.75-5.563Z"/></svg>
+      </div>
+    </div>
+    <div class="bg-white rounded-2xl shadow-card p-5 flex items-center justify-between border border-slate-100">
+      <div>
+        <p class="text-sm text-slate-500">Remaining Today</p>
+        <p class="text-3xl font-bold text-slate-900">{% if remaining is None %}∞{% else %}{{ remaining }}/{{ profile_user.connection_limit }}{% endif %}</p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-coral/10 text-coral flex items-center justify-center">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="1.5" d="M16 8h.01M12 13l3-3m4 2c0 4.418-3.582 8-8 8s-8-3.582-8-8 3.582-8 8-8 8 3.582 8 8Z"/></svg>
+      </div>
+    </div>
+    <div class="bg-white rounded-2xl shadow-card p-5 flex items-center justify-between border border-slate-100">
+      <div>
+        <p class="text-sm text-slate-500">Profile Views</p>
+        <p class="text-3xl font-bold text-slate-900">{{ profile_user.profile_views|default:127 }}</p>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-teal-500/10 text-teal-500 flex items-center justify-center">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="1.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7Z"/><path stroke-width="1.5" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-3xl shadow-card p-6">
+    <div class="flex items-center space-x-3 mb-6">
+      <button id="tab-about" class="tab-button px-3 py-2 rounded-lg bg-slate-100 text-sm font-semibold text-slate-700">About</button>
+      <button id="tab-experience" class="tab-button px-3 py-2 rounded-lg text-sm font-semibold text-slate-700">Experience</button>
+      <button id="tab-skills" class="tab-button px-3 py-2 rounded-lg text-sm font-semibold text-slate-700">Skills</button>
+    </div>
+    <div id="panel-about" class="space-y-3">
+      <h3 class="text-lg font-semibold text-slate-900">About</h3>
+      <p class="text-slate-600">{{ profile_user.bio|default:"Passionate developer with 8+ years of experience building scalable web applications." }}</p>
+      {% if profile_user.goals %}
+        <p class="text-slate-600"><span class="font-semibold">Goals:</span> {{ profile_user.goals }}</p>
+      {% endif %}
+    </div>
+    <div id="panel-experience" class="space-y-5 hidden">
+      <h3 class="text-lg font-semibold text-slate-900">Experience</h3>
+      {% for item in experiences %}
+        <div class="border-l-4 border-teal-500 pl-4">
+          <p class="text-lg font-semibold text-slate-900">{{ item.title }}</p>
+          <p class="text-teal-600 font-semibold">{{ item.company }}</p>
+          <p class="text-sm text-slate-500">{{ item.start_year }} - {{ item.end_year|default:"Present" }}</p>
+          {% if item.description %}<p class="text-slate-600 mt-2">{{ item.description }}</p>{% endif %}
+        </div>
+      {% empty %}
+        <p class="text-slate-600">No experience added yet.</p>
+      {% endfor %}
+    </div>
+    <div id="panel-skills" class="space-y-3 hidden">
+      <h3 class="text-lg font-semibold text-slate-900">Skills</h3>
+      <div class="flex flex-wrap gap-2">
+        {% for skill in profile_user.skills_list %}
+          <span class="px-3 py-1 rounded-full bg-coral/10 text-coral font-semibold text-sm">{{ skill }}</span>
+        {% empty %}
+          <p class="text-slate-600">Add your skills to get better matches.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  {% if profile_user == user %}
+  <div id="edit-profile" class="bg-white rounded-3xl shadow-card p-6">
+    <h3 class="text-lg font-semibold text-slate-900 mb-4">Edit Profile</h3>
+    <form method="post" enctype="multipart/form-data" class="grid md:grid-cols-2 gap-4">
+      {% csrf_token %}
+      {% for field in form.visible_fields %}
+        <div class="{% if field.name in 'bio goals' %}md:col-span-2{% endif %}">
+          <label class="text-sm font-semibold text-slate-700">{{ field.label }}</label>
+          {{ field }}
+          {% for error in field.errors %}
+            <p class="text-sm text-coral">{{ error }}</p>
+          {% endfor %}
+        </div>
+      {% endfor %}
+      <div class="md:col-span-2 flex justify-end">
+        <button type="submit" class="px-4 py-2 rounded-xl bg-teal-500 text-white font-semibold hover:bg-teal-600">Save changes</button>
+      </div>
+    </form>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const tabs = ['about', 'experience', 'skills'];
+    tabs.forEach((tab) => {
+      const btn = document.getElementById(`tab-${tab}`);
+      const panel = document.getElementById(`panel-${tab}`);
+      btn.addEventListener('click', () => {
+        tabs.forEach((t) => {
+          document.getElementById(`tab-${t}`).classList.remove('bg-slate-100');
+          document.getElementById(`panel-${t}`).classList.add('hidden');
+        });
+        btn.classList.add('bg-slate-100');
+        panel.classList.remove('hidden');
+      });
+    });
+  });
+</script>
+{% endblock %}

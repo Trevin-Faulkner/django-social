@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block content %}
+<div class="min-h-[70vh] flex items-center justify-center px-4 py-12">
+  <div class="bg-white shadow-card rounded-3xl p-10 w-full max-w-xl">
+    <div class="text-center mb-8 space-y-2">
+      <div class="mx-auto w-12 h-12 rounded-2xl bg-teal-500 flex items-center justify-center text-white text-xl font-bold">CP</div>
+      <p class="text-sm text-slate-500 uppercase tracking-wide">{% trans "Social Login" %}</p>
+      <h1 class="text-2xl font-bold text-slate-900">{% blocktrans with provider_name=provider.name %}Continue with {{ provider_name }}{% endblocktrans %}</h1>
+      <p class="text-slate-600 text-sm">ConnectPro uses your Google account only to sign you in.</p>
+    </div>
+
+    <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm text-slate-600 mb-6">
+      {% if process == "connect" %}
+        {% blocktrans with provider_name=provider.name %}You are about to connect your account with {{ provider_name }}.{% endblocktrans %}
+      {% else %}
+        {% blocktrans with provider_name=provider.name %}You are about to sign in with {{ provider_name }}.{% endblocktrans %}
+      {% endif %}
+    </div>
+
+    <form method="post" class="space-y-4">
+      {% csrf_token %}
+      <button type="submit" class="w-full py-3 rounded-xl bg-teal-500 text-white font-semibold hover:bg-teal-600 transition">
+        {% if process == "connect" %}{% trans "Connect and continue" %}{% else %}{% trans "Continue" %}{% endif %}
+      </button>
+      <a href="{% url 'signup' %}" class="block text-center text-sm text-slate-600 hover:text-slate-900">{% trans "Cancel" %}</a>
+    </form>
+  </div>
+</div>
+{% endblock %}
