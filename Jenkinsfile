@@ -75,9 +75,8 @@ pipeline {
             steps {
                 withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
                     sh '''
-                    set -x
-                    kubectl config current-context
-                    kubectl get nodes
+                    set -e
+                    sed -i "s|__TAG__|$TAG|g" k8s/deployment.yaml
                     kubectl apply -f k8s/deployment.yaml
                     '''
                 }

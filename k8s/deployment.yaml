@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: django
-          image: jack61318/django-app:latest
+          image: jack61318/django-app:__TAG__
           ports:
             - containerPort: 8000
           envFrom:
