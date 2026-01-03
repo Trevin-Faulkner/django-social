@@ -71,9 +71,19 @@ pipeline {
                 }
             }
         }
+        // stage('Deploy to Kubernetes') {
+        //     steps {
+        //         sh 'kubectl apply -f k8s/deployment.yaml'
+        //     }
+        // }
         stage('Deploy to Kubernetes') {
             steps {
-                sh 'kubectl apply -f k8s/deployment.yaml'
+                sh '''
+                set -x
+                kubectl config current-context
+                kubectl get nodes
+                kubectl apply -f k8s/deployment.yaml
+                '''
             }
         }
     }
