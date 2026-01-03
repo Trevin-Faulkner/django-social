@@ -20,3 +20,4 @@ spec:
           envFrom:
             - secretRef:
                 name: django-secrets
+                optional: true
