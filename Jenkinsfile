@@ -29,38 +29,51 @@ pipeline {
             }
         }
 
-        stage('Push Image') {
+        // stage('Push Image') {
+        //     steps {
+        //         withCredentials([usernamePassword(
+        //             credentialsId: 'dockerhub-creds',
+        //             usernameVariable: 'DOCKER_USER',
+        //             passwordVariable: 'DOCKER_PASS'
+        //         )]) {
+        //             sh '''
+        //               echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+        //               docker push $DOCKER_IMAGE:$TAG
+        //             '''
+        //         }
+        //     }
+        // }
+
+        // stage('Deploy to Kubernetes') {
+        //     steps {
+        //         // withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
+        //         //     sh '''
+        //         //       sed -i "s|:latest|:$TAG|g" k8s/deployment.yaml
+        //         //       kubectl apply -f k8s/
+        //         //     '''
+        //         // }
+        //         withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
+        //             sh '''
+        //             export KUBECONFIG=$KUBECONFIG
+        //             kubectl version --client
+        //             kubectl get nodes
+        //             kubectl apply -f k8s/
+        //             '''
+        //         }
+
+        //     }
+        // }
+
+        stage('Push Docker Image') {
             steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'dockerhub-creds',
-                    usernameVariable: 'DOCKER_USER',
-                    passwordVariable: 'DOCKER_PASS'
-                )]) {
-                    sh '''
-                      echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
-                      docker push $DOCKER_IMAGE:$TAG
-                    '''
+                withDockerRegistry([credentialsId: 'dockerhub-id', url: '']) {
+                    sh "docker push $DOCKER_IMAGE:latest"
                 }
             }
         }
-
         stage('Deploy to Kubernetes') {
             steps {
-                // withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
-                //     sh '''
-                //       sed -i "s|:latest|:$TAG|g" k8s/deployment.yaml
-                //       kubectl apply -f k8s/
-                //     '''
-                // }
-                withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
-                    sh '''
-                    export KUBECONFIG=$KUBECONFIG
-                    kubectl version --client
-                    kubectl get nodes
-                    kubectl apply -f k8s/
-                    '''
-                }
-
+                sh 'kubectl apply -f k8s/deployment.yaml'
             }
         }
     }
